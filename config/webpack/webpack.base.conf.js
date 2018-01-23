@@ -1,9 +1,17 @@
 const path = require('path')
-const baseURL = process.cwd()
-const utils = require(path.join(baseURL, 'scripts/utils'))
+const root = process.cwd()
+const utils = require(path.join(root, 'scripts/utils'))
+//
+const res = utils.requireES6('config/game.js')
+
+debugger
+
 const config = utils.getProjectConfig()
 
-const phaserDir = utils.dir('node_modules/phaser-ce')
+const dir = utils.dir
+
+const phaserDir = dir('node_modules/phaser-ce')
+
 const assetSubDir = config.client.assetDir
 
 module.exports = {
@@ -25,7 +33,7 @@ module.exports = {
       // See: https://github.com/photonstorm/phaser/issues/2762
       phaser: path.join(phaserDir, 'build/custom/phaser-split.js'),
       pixi: path.join(phaserDir, 'build/custom/pixi.js'),
-      p2: path.join(phaserDir, 'build/custom/p2.js'),
+      p2: path.join(phaserDir, 'build/custom/p2.js')
     }
   },
   module: {
@@ -48,9 +56,11 @@ module.exports = {
       },
       // For phaser 2, these components must be avaliable in global scope.
       // See: https://github.com/photonstorm/phaser/issues/2762
+      /* eslint-disable no-multi-spaces */
       { test: /pixi\.js/,          loader: 'expose-loader', include: [phaserDir], options: 'PIXI' },
       { test: /phaser-split\.js$/, loader: 'expose-loader', include: [phaserDir], options: 'Phaser' },
       { test: /p2\.js/,            loader: 'expose-loader', include: [phaserDir], options: 'p2' },
+      /* eslint-enable no-multi-spaces */
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
         loader: 'url-loader',

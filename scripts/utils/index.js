@@ -1,12 +1,18 @@
-const path = require('path')
+const pathLib = require('path')
+const fs = require('fs')
 const chalk = require('chalk')
+const babel = require('babel-core')
+const requireFromString = require('require-from-string')
 
 exports.path = (...locations) => {
-  return path.join(__dirname, '../../', ...locations)
+  return pathLib.join(__dirname, '../../', ...locations)
 }
 
 exports.env = () => {
-
+  return {
+    nodeEnv: process.env.NODE_ENV || 'develop',
+    buildTarget: process.env.BUILD_TARGET || 'web'
+  }
 }
 
 exports.logger = (level, message, extraInfo = null) => {
@@ -42,6 +48,40 @@ exports.logger = (level, message, extraInfo = null) => {
   console.log(msg)
 }
 
-exports.requireES6 = () => {
+const requireCache = {}
 
+// Transform es6 module (pre-compile) into commonjs module
+exports.requireES6 = (path, isRelativeToRoot = true) => {
+  let p = path
+  if (isRelativeToRoot) {
+    p = exports.path(path)
+  }
+
+  const babelrc = {
+    plugins: [
+      'transform-inline-environment-variables',
+      ['transform-es2015-modules-commonjs', {
+        loose: true
+      }]
+    ]
+  }
+
+  // TODO: auto detect 'index' files if 'p' is a folder
+  try {
+    const stats = fs.lstatSync(p)
+    if (stats.isFile()) {
+      if (requireCache[p] === undefined) {
+        let text
+        text = fs.readFileSync(p, 'utf8')
+        const compiled = babel.transform(text, babelrc)
+        requireCache[p] = requireFromString(compiled.code).default
+      }
+
+      return requireCache[p]
+    } else {
+      throw Error(`Failed to require, ${p} is not a directory.`)
+    }
+  } catch (e) {
+    console.error(e)
+  }
 }
